@@ -2,14 +2,14 @@
 #include <iostream>
 #include <sstream>
 
-void drawAxes(sf::RenderWindow &window, sf::Vector2f center)
+void drawAxes(sf::RenderWindow &window, sf::Vector2f center, sf::Vector2f viewSize)
 {
     sf::Vertex xAxis[] = {
-        {{0, center.y}, sf::Color(100, 100, 100)},
-        {{800, center.y}, sf::Color(100, 100, 100)}};
+        {{center.x - viewSize.x, center.y}, sf::Color(100, 100, 100)},
+        {{center.x + viewSize.x, center.y}, sf::Color(100, 100, 100)}};
     sf::Vertex yAxis[] = {
-        {{center.x, 0}, sf::Color(100, 100, 100)},
-        {{center.x, 600}, sf::Color(100, 100, 100)}};
+        {{center.x, center.y - viewSize.y}, sf::Color(100, 100, 100)},
+        {{center.x, center.y + viewSize.y}, sf::Color(100, 100, 100)}};
     window.draw(xAxis, 2, sf::PrimitiveType::Lines);
     window.draw(yAxis, 2, sf::PrimitiveType::Lines);
 }
@@ -20,9 +20,9 @@ int main()
     window.setFramerateLimit(60);
 
     sf::Clock clock;
-    sf::Vector2i center = window.getViewport(window.getDefaultView()).getCenter();
+    sf::Vector2f center(window.getSize().x / 2.0f, window.getSize().y / 2.0f);
 
-    Pendulum pendulum(sf::Vector2f(center.x, center.y));
+    Pendulum pendulum(center);
 
     pendulum.setDamping(0.0);
 
@@ -30,6 +30,7 @@ int main()
     std::cout << "[1] No Damping (Perpetual)\n";
     std::cout << "[2] Add Damping (Spiral)\n";
     std::cout << "[Up/Down] Change Gravity\n";
+    std::cout << "[Left mouse] Place pendulum at new position\n";
     std::cout << "[Space] Reset to high angle\n";
 
     while (window.isOpen())
@@ -43,9 +44,11 @@ int main()
             {
                 sf::FloatRect visibleArea({{0, 0}, {(float)resizeEvent->size.x, (float)resizeEvent->size.y}});
                 window.setView(sf::View(visibleArea));
-                sf::Vector2i windowCenter = window.getViewport(window.getDefaultView()).getCenter();
 
-                pendulum.setScreenCenter(sf::Vector2f(windowCenter.x, windowCenter.y));
+                center = {resizeEvent->size.x / 2.0f, resizeEvent->size.y / 2.0f};
+                pendulum.setScreenCenter(center);
+
+                pendulum.reset(pendulum.getState().theta, pendulum.getState().omega);
             }
 
             if (const auto *key = event->getIf<sf::Event::KeyPressed>())
@@ -87,12 +90,12 @@ int main()
             {
                 if (mouseEvent->button == sf::Mouse::Button::Left)
                 {
-                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    sf::Vector2i windowCenter = window.getViewport(window.getDefaultView()).getCenter();
+                    sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+                    sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
 
                     double scale = pendulum.getScale();
-                    double clickTheta = (mousePos.x - windowCenter.x) / scale;
-                    double clickOmega = (windowCenter.y - mousePos.y) / (scale / 2.0);
+                    double clickTheta = (worldPos.x - center.x) / scale;
+                    double clickOmega = (center.y - worldPos.y) / (scale / 2.0);
 
                     pendulum.reset(clickTheta, clickOmega);
                 }
@@ -107,7 +110,7 @@ int main()
 
         window.clear(sf::Color::Black);
 
-        drawAxes(window, sf::Vector2f(center.x, center.y));
+        drawAxes(window, sf::Vector2f(center.x, center.y), window.getView().getSize());
 
         window.draw(pendulum.getPhaseTrace());
 
