@@ -19,7 +19,7 @@ State Pendulum::derivative(const State &s)
 void Pendulum::update(double dt)
 {
     State k1 = derivative(state);
-        
+
     State s2 = {state.theta + k1.theta * dt * 0.5, state.omega + k1.omega * dt * 0.5};
     State k2 = derivative(s2);
 
@@ -29,8 +29,8 @@ void Pendulum::update(double dt)
     State s4 = {state.theta + k3.theta * dt, state.omega + k3.omega * dt};
     State k4 = derivative(s4);
 
-    state.theta += (dt / 6.0) * (k1.theta + 2*k2.theta + 2*k3.theta + k4.theta);
-    state.omega += (dt / 6.0) * (k1.omega + 2*k2.omega + 2*k3.omega + k4.omega);
+    state.theta += (dt / 6.0) * (k1.theta + 2 * k2.theta + 2 * k3.theta + k4.theta);
+    state.omega += (dt / 6.0) * (k1.omega + 2 * k2.omega + 2 * k3.omega + k4.omega);
 
     addPointToTrace();
 }
@@ -41,18 +41,14 @@ void Pendulum::reset(double startTheta, double startOmega)
     phaseTrace.clear();
 }
 
-void Pendulum::addPointToTrace() {
-    float x = screenCenter.x + (float) (state.theta * scale);
-    float y = screenCenter.y - (float) (state.omega * scale / 2.0);
+void Pendulum::addPointToTrace()
+{
+    float x = screenCenter.x + (float)(state.theta * scale);
+    float y = screenCenter.y - (float)(state.omega * scale / 2.0);
 
     sf::Color color = (std::abs(state.omega) > 2.0) ? sf::Color::Red : sf::Color::Cyan;
-    
-    phaseTrace.append({{x,y}, color});
 
-    if(phaseTrace.getVertexCount() > 5000)
-    {
-        phaseTrace.clear();
-    }
+    phaseTrace.append({{x, y}, color});
 }
 
 void Pendulum::setDamping(double d)
@@ -63,13 +59,14 @@ void Pendulum::setG(double g)
 {
     this->g = g;
 }
-void Pendulum::setL(double L) {
+void Pendulum::setL(double L)
+{
     this->L = L;
 }
 void Pendulum::setPhaseTrace(sf::VertexArray pt)
 {
     this->phaseTrace = pt;
-} 
+}
 void Pendulum::setScreenCenter(sf::Vector2f sc)
 {
     this->screenCenter = sc;
@@ -95,7 +92,7 @@ double Pendulum::getG() const
     return g;
 }
 double Pendulum::getL() const
-{  
+{
     return L;
 }
 sf::VertexArray Pendulum::getPhaseTrace() const
